@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "resipy-web-platform",
+  "main": "edge/_worker.js",
+  "compatibility_date": "2026-10-31",
+  "assets": {
+    "directory": "frontend",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "CLUSTER_INTERNAL_API": "http://127.0.0.1:8000"
+  }
+}

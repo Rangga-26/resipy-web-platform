@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Geolistrik & Inversi ResIPy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: 8px;
+        }
+        .custom-popup .leaflet-popup-tip {
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-950 p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⚡</span>
+                <div>
+                    <h1 class="text-lg font-bold text-emerald-400">ResIPy & GPS Field Geophysics Platform</h1>
+                    <p class="text-xs text-slate-400">Sistem Inversi 2D/3D & Pemetaan Geolistrik Lapangan</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full font-mono flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Backend Online
+                </span>
+                <span class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full font-mono">v1.1.0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Panel Kontrol & Input (Tim 1 & 2) -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h2 class="text-base font-semibold text-slate-200 flex items-center gap-2">
+                    <span>🎛️</span> Konfigurasi Survey 2D
+                </h2>
+                <span class="text-xs text-slate-500 font-mono">Tim 1 & 2</span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Konfigurasi Elektroda</label>
+                <select id="arrayTypeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <option value="Wenner-Schlumberger">Wenner-Schlumberger</option>
+                    <option value="Dipole-Dipole">Dipole-Dipole</option>
+                    <option value="Wenner Alpha">Wenner Alpha</option>
+                    <option value="Pole-Dipole">Pole-Dipole</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Spasi Elektroda (a)</label>
+                    <div class="relative">
+                        <input id="spacingInput" type="number" value="5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 pr-8">
+                        <span class="absolute right-3 top-2.5 text-xs text-slate-500">m</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Jumlah Elektroda</label>
+                    <input id="numElectrodesInput" type="number" value="32" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">File Data Lapangan (.dat/.csv)</label>
+                <input id="surveyFileInput" type="file" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer">
+            </div>
+
+            <button id="btnInvert" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-lg text-sm transition shadow-md flex items-center justify-center gap-2">
+                <span>🚀</span> Mulai Inversi ResIPy R2
+            </button>
+
+            <div id="surveyStatusBox" class="text-xs bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-slate-400 space-y-1">
+                <div class="flex justify-between"><span>Status Engine:</span> <span class="text-emerald-400">Siap Eksekusi</span></div>
+                <div class="flex justify-between"><span>Koreksi Topo:</span> <span class="text-cyan-400" id="topoStatusLabel">Aktif (DEMNAS / GPS)</span></div>
+            </div>
+        </div>
+
+        <!-- Peta Interaktif & Tracking GPS (Tim 4: Peta & GPS - Healtrack) -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 lg:col-span-2 space-y-4 shadow-sm">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-base font-semibold text-slate-200 flex items-center gap-2">
+                        <span>🗺️</span> Peta Interaktif & Integrasi GPS
+                    </h2>
+                    <span class="text-xs bg-cyan-950 text-cyan-400 border border-cyan-800 px-2 py-0.5 rounded-full font-mono">Tim 4 (Healtrack)</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btnLoadSample" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1 transition">
+                        <span>📍</span> Muat Data Sample NMEA
+                    </button>
+                    <a id="btnExportTopo" href="/api/gps/export-resipy-topography" target="_blank" class="bg-emerald-900/40 hover:bg-emerald-900/70 text-emerald-400 text-xs px-3 py-1.5 rounded-lg border border-emerald-800 flex items-center gap-1 transition">
+                        <span>💾</span> Unduh .topo ResIPy
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 block">Total Elektroda</span>
+                    <span id="statElectrodes" class="text-emerald-400 font-bold text-sm font-mono">-</span>
+                </div>
+                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 block">Panjang Lintasan (2D)</span>
+                    <span id="statLength" class="text-cyan-400 font-bold text-sm font-mono">-</span>
+                </div>
+                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 block">Zona UTM</span>
+                    <span id="statZone" class="text-amber-400 font-bold text-sm font-mono">-</span>
+                </div>
+                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 block">Rentang Elevasi (Z)</span>
+                    <span id="statElevation" class="text-indigo-400 font-bold text-sm font-mono">-</span>
+                </div>
+            </div>
+
+            <!-- Leaflet Container -->
+            <div id="map" class="h-72 rounded-lg border border-slate-800 z-0"></div>
+
+            <!-- Elevation Profile Canvas -->
+            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1.5">
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span class="font-medium text-slate-300">Profil Ketinggian Relief Lintasan (Topography Z)</span>
+                    <span class="text-xs text-slate-500 font-mono">DEM & GPS Fix RTK</span>
+                </div>
+                <div id="elevationSvgContainer" class="h-20 w-full flex items-center justify-center text-xs text-slate-600">
+                    Klik 'Muat Data Sample NMEA' atau upload log GPS untuk melihat profil elevasi.
+                </div>
+            </div>
+        </div>
+
+        <!-- Viewport Inversi 2D & 3D (Tim 2 & 3) -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 lg:col-span-3 space-y-4 shadow-sm">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h2 class="text-base font-semibold text-slate-200 flex items-center gap-2">
+                    <span>🔬</span> Penampang Resistivitas & Model 3D
+                </h2>
+                <div class="flex gap-2">
+                    <button class="text-xs bg-emerald-900/50 text-emerald-400 border border-emerald-700 px-3 py-1 rounded">2D Section</button>
+                    <button class="text-xs bg-slate-800 text-slate-400 border border-slate-700 px-3 py-1 rounded">3D Mesh View</button>
+                </div>
+            </div>
+            <div class="h-64 bg-slate-900 border border-slate-800 rounded-lg flex flex-col items-center justify-center text-slate-500 text-sm gap-2">
+                <span class="text-3xl">📐</span>
+                <span>Visualisasi Penampang Resistivitas Siap Dirender (ResIPy Engine v3.4.1)</span>
+                <span class="text-xs text-slate-600">Inversi R2/cR2 siap menggunakan topografi yang diinjeksi oleh modul Tim 4.</span>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-7xl mx-auto p-4 text-center text-xs text-slate-600 border-t border-slate-800/60 mt-6">
+        Platform Riset Geofisika Lapangan ResIPy • Dikembangkan oleh Tim Kolaborasi Hermes Agent (Cikkaaa, Phiseis, Windah, Nissa, Healtrack)
+    </footer>
+
+    <script>
+        // Inisialisasi Peta Leaflet
+        const map = L.map('map').setView([-7.77, 110.37], 14);
+
+        // Basemap OpenStreetMap
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let surveyLayerGroup = L.layerGroup().addTo(map);
+
+        // Fungsi Render Data GeoJSON ke Peta
+        function renderSurveyData(geojson) {
+            surveyLayerGroup.clearLayers();
+
+            let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+            const elevationData = [];
+
+            // Add GeoJSON Layer
+            L.geoJSON(geojson, {
+                style: function (feature) {
+                    if (feature.geometry.type === 'LineString') {
+                        return { color: '#06b6d4', weight: 4, opacity: 0.85 };
+                    }
+                },
+                pointToLayer: function (feature, latlng) {
+                    const props = feature.properties;
+                    elevationData.push({
+                        id: props.electrode_id,
+                        x: props.cumulative_dist_m,
+                        z: props.elevation_m
+                    });
+
+                    // Update bounds
+                    minLat = Math.min(minLat, latlng.lat);
+                    maxLat = Math.max(maxLat, latlng.lat);
+                    minLon = Math.min(minLon, latlng.lng);
+                    maxLon = Math.max(maxLon, latlng.lng);
+
+                    return L.circleMarker(latlng, {
+                        radius: 5,
+                        fillColor: '#10b981',
+                        color: '#022c22',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+                },
+                onEachFeature: function (feature, layer) {
+                    if (feature.geometry.type === 'Point') {
+                        const p = feature.properties;
+                        const popupContent = `
+                            <div class="text-xs p-1 space-y-1">
+                                <div class="font-bold text-emerald-400 border-b border-slate-700 pb-1">Elektroda #${p.electrode_id}</div>
+                                <div><b class="text-slate-400">Jarak Kumulatif:</b> ${p.cumulative_dist_m} m</div>
+                                <div><b class="text-slate-400">Spasi Titik:</b> ${p.step_dist_2d_m} m</div>
+                                <div><b class="text-slate-400">Elevasi (Z):</b> <span class="text-cyan-300 font-mono">${p.elevation_m} m</span></div>
+                                <div><b class="text-slate-400">UTM Easting:</b> ${p.easting} m</div>
+                                <div><b class="text-slate-400">UTM Northing:</b> ${p.northing} m</div>
+                            </div>
+                        `;
+                        layer.bindPopup(popupContent, { className: 'custom-popup' });
+                    }
+                }
+            }).addTo(surveyLayerGroup);
+
+            // Fit bounds
+            if (minLat <= maxLat) {
+                map.fitBounds([[minLat, minLon], [maxLat, maxLon]], { padding: [30, 30] });
+            }
+
+            // Update Stats Bar
+            const lineFeature = geojson.features.find(f => f.geometry.type === 'LineString');
+            if (lineFeature) {
+                const lp = lineFeature.properties;
+                document.getElementById('statElectrodes').innerText = lp.total_electrodes;
+                document.getElementById('statLength').innerText = lp.total_length_2d_m + ' m';
+                document.getElementById('statZone').innerText = lp.utm_zone + lp.utm_hemisphere;
+                document.getElementById('statElevation').innerText = lp.min_elevation_m + ' - ' + lp.max_elevation_m + ' m';
+            }
+
+            // Render Elevation Profile SVG
+            renderElevationSvg(elevationData);
+        }
+
+        function renderElevationSvg(data) {
+            if (!data || data.length === 0) return;
+            const container = document.getElementById('elevationSvgContainer');
+            const minZ = Math.min(...data.map(d => d.z));
+            const maxZ = Math.max(...data.map(d => d.z));
+            const maxX = Math.max(...data.map(d => d.x));
+            const zRange = Math.max(1.0, maxZ - minZ);
+
+            const width = container.clientWidth || 500;
+            const height = 70;
+            const pad = 10;
+
+            const points = data.map(d => {
+                const px = pad + ((d.x / maxX) * (width - 2 * pad));
+                const py = height - pad - (((d.z - minZ) / zRange) * (height - 2 * pad));
+                return `${px.toFixed(1)},${py.toFixed(1)}`;
+            }).join(' ');
+
+            const svg = `
+                <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" class="overflow-visible">
+                    <polyline fill="none" stroke="#06b6d4" stroke-width="2.5" points="${points}" />
+                    ${data.map(d => {
+                        const px = pad + ((d.x / maxX) * (width - 2 * pad));
+                        const py = height - pad - (((d.z - minZ) / zRange) * (height - 2 * pad));
+                        return `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3" fill="#10b981" />`;
+                    }).join('')}
+                </svg>
+            `;
+            container.innerHTML = svg;
+        }
+
+        // Event: Load Sample
+        document.getElementById('btnLoadSample').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/gps/sample');
+                const data = await res.json();
+                if (data.success && data.geojson) {
+                    renderSurveyData(data.geojson);
+                }
+            } catch (err) {
+                console.error('Gagal memuat sample:', err);
+                alert('Gagal memuat data sample dari API.');
+            }
+        });
+
+        // Auto load sample on init
+        fetch('/api/gps/sample')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.geojson) renderSurveyData(data.geojson);
+            })
+            .catch(e => console.log('Sample load init:', e));
+    </script>
+</body>
+</html>
