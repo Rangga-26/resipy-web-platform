@@ -25,8 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest fastapi uvicorn
+          pip install -r requirements.txt
 
       - name: Run Backend GPS & Inversion Tests
         run: |
@@ -48,12 +47,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Check Cloudflare Credentials
+        id: check_creds
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "::notice ::CLOUDFLARE_API_TOKEN secret belum diset di repository settings. Langkah deployment diskip."
+          fi
+
       - name: Setup Node.js
+        if: steps.check_creds.outputs.has_token == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Deploy to Cloudflare
+        if: steps.check_creds.outputs.has_token == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
