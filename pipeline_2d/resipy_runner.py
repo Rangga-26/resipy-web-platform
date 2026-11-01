@@ -63,8 +63,9 @@ class ResIPy2DRunner:
         self.project = rs.Project(typ=self.typ)
 
         # 1. Parsing & Validasi
-        print(f"[INFO] Parsing data survei: {input_path} (ftype=ResInv)...")
-        self.project.createSurvey(str(input_path), ftype="ResInv")
+        ftype = "Syscal" if input_path.suffix.lower() == ".csv" else "ResInv"
+        print(f"[INFO] Parsing data survei: {input_path} (ftype={ftype})...")
+        self.project.createSurvey(str(input_path), ftype=ftype)
         if not self.project.surveys:
             raise ValueError("Gagal membaca survei geolistrik dari file input.")
 
