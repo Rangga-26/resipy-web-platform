@@ -43,3 +43,11 @@ Lokasi Repositori: `/home/localai/projects/resipy-web-platform`
   - **Hosting Edge Cloudflare:** Deployment Web Frontend ke Cloudflare Pages/Workers dengan latensi ultra rendah dan proteksi DDoS/WAF.
   - **Cloudflare Tunnel / Zero Trust API Gateway:** Routing aman dari publik (domain Web) ke microservice komputasi internal klaster (Cikkaaa Ubuntu untuk Inversi 2D ResIPy & Windah Windows untuk Pemodelan 3D 24 Jam) tanpa membuka port publik rentan.
   - **Manajemen Domain & SSL:** Integrasi sertifikat TLS otomatis, custom caching rules untuk aset 3D (glTF/binary mesh), dan edge workers untuk kompresi data transfer.
+
+---
+
+## 🚀 Cloud Accelerator (Google Colab)
+Untuk inversi data geolistrik skala besar atau pemodelan 3D berdensitas tinggi menggunakan GPU/High-RAM cloud gratis Google Colab:
+- **Notebook:** [`notebooks/ResIPy_PeatFR_3D_Colab_Accelerator.ipynb`](notebooks/ResIPy_PeatFR_3D_Colab_Accelerator.ipynb)
+- **Direct Run in Colab:** [Buka di Google Colab](https://colab.research.google.com/github/Rangga-26/resipy-web-platform/blob/main/notebooks/ResIPy_PeatFR_3D_Colab_Accelerator.ipynb)
+
