@@ -10,5 +10,7 @@ node_modules/
 .wrangler/
 .DS_Store
 *.log
+fort.7
+runs/
 data/*
 !data/.gitkeep
