@@ -38,7 +38,7 @@ export default {
     // =========================================================================
     if (url.pathname.startsWith("/api/")) {
       // Jika CLUSTER_API_ORIGIN dikonfigurasi, teruskan traffic ke tunnel backend
-      const clusterOrigin = env.CLUSTER_INTERNAL_API || "http://127.0.0.1:8000";
+      const clusterOrigin = env.CLUSTER_INTERNAL_API || "http://127.0.0.1:8050";
       
       try {
         const targetUrl = new URL(url.pathname + url.search, clusterOrigin);

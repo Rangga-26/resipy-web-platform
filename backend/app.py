@@ -9,6 +9,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from gps_maps.router import router as gps_router
+from pipeline_2d.router import router as inversion_router
 
 app = FastAPI(
     title="ResIPy & GPS Geophysics Platform API",
@@ -29,6 +30,9 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Mount GPS & Maps Router (Tim 4 - Healtrack)
 app.include_router(gps_router)
+
+# Mount ResIPy 2D Inversion Router (Tim 2 - Nissa)
+app.include_router(inversion_router)
 
 # Mount Frontend GUI
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
@@ -77,4 +81,4 @@ def survey_status():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8005)
+    uvicorn.run(app, host="0.0.0.0", port=8050)
